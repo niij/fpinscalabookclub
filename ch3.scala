@@ -75,18 +75,68 @@ object List {
     case Cons(h, t) => Cons(f(h), map(t)(f))
     case Nil => Nil
   }
-  
+
   def flatMap[A](l: List[A]): List[A] = ???
 
 }
+
+
+
+
+sealed trait Tree[+A]
+case class Leaf[A](value: A) extends Tree[A]
+case class Branch[A](left: Tree[A], right: Tree[A]) extends Tree[A]
+
+
+object Tree {
+  def size[A](t: Tree[A]): Int = {
+    def sizeInner[A](it: Tree[A], acc: Int): Int = it match {
+      case Leaf(_) => 1
+      case Branch(l, r) => 1 + sizeInner(l, acc) + sizeInner(r, acc)
+    }
+    sizeInner(t, 0)
+  }
+
+  def maximum(t: Tree[Int]): Int = t match {
+    case Leaf(n) => n
+    case Branch(l, r) => maximum(l) max maximum(r)
+  }
+
+  def depth[A](t: Tree[A]): Int = t match {
+    case Leaf(_) => 1
+    case Branch(l, r) => 1 + depth(l).max(depth(r))  // Why is `1 + depth(l) max depth(r)` a different result?
+  }
+
+  def map[A, B](t: Tree[A])(f: A => B): Tree[B] = t match {
+    case Leaf(n) => Leaf(f(n))
+    case Branch(l, r) => Branch(map(l)(f), map(r)(f))
+  }
+
+  def fold[A,B](t: Tree[A])(f: A => B)(g: (B,B) => B): B = t match {
+    case Leaf(n) => f(n)
+    case Branch(l, r) => g(fold(l)(f)(g), fold(r)(f)(g))
+  }
+
+  def sizeFold[A](t: Tree[A]): Int = fold(t)(_ => 1)(1 + _ + _)
+
+  def maxFold(t: Tree[Int]): Int = fold(t)(identity)(_ max _)
+
+  def depthFold[A](t: Tree[A]): Int = 1 + fold(t)(_ => 1)(1 + _ max _)
+
+
+}
+
+
+
+
+
 
 object Main extends App {
   val li = List(1,2,3,4,5)
   val ld = List(1.0, 2.0, 3.0, 4.0, 5.0, 20.0)
   val ls = List("a", "bb", "ccc", "dddd", "eeeee")
   val lol = List(li, ld, ls)
-
-
+  println("LISTS_____________")
   println(List.apply(1,2,3))
   println(List.tail(List(1,2,3)))
   println(List.setHead(li, 100))
@@ -101,5 +151,43 @@ object Main extends App {
   println(List.lengthFoldLeft(ld))
   println(List.reverse(li))
   println(List.append(li, 20))
-  println(List.map(li)(_*2))
+  println(List.map(li)(_+1))
+
+
+
+
+  val t =
+    Branch(
+      Branch(
+        Leaf(1000),
+        Leaf(10)
+      ),
+      Branch(
+        Branch(
+          Branch(
+            Branch(
+              Branch(
+                Leaf(20),
+                Leaf(30)
+              ),
+              Leaf(40)
+            ),
+            Leaf(2)
+          ),
+          Leaf(3)
+        ),
+        Leaf(3)
+      )
+    )
+
+  println("Trees__________")
+  println(t)
+  println(Tree.size(t))
+  println(Tree.maximum(t))
+  println(Tree.depth(t))
+  println(Tree.map(t)(_*2))
+  println(Tree.fold(t)(_*2)(_+_))
+  println(Tree.sizeFold(t))
+  println(Tree.maxFold(t))
+  println(Tree.depthFold(t))
 }
